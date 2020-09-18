@@ -50,9 +50,17 @@ func QueryServerStats(addr string) (stats []Stat, err error) {
 	return
 }
 
-func WriteToDB(addr, dbname string, serverStats map[string][]Stat) (err error) {
+func WriteToDB(addr, dbname string, serverStats map[string][]Stat, usernameAndPassword ...string) (err error) {
+	var username, password string
+	if len(usernameAndPassword) >= 2 {
+		username = usernameAndPassword[0]
+		password = usernameAndPassword[1]
+	}
+
 	conn, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: addr,
+		Addr:     addr,
+		Username: username,
+		Password: password,
 	})
 	if err != nil {
 		return
@@ -115,7 +123,8 @@ func main() {
 	}
 
 	sectInfluxDB := conf.Section("influxDB")
-	err = WriteToDB(sectInfluxDB.Key("addr").Value(), sectInfluxDB.Key("dbname").Value(), serverStats)
+	err = WriteToDB(sectInfluxDB.Key("addr").Value(), sectInfluxDB.Key("dbname").Value(), serverStats,
+		sectInfluxDB.Key("username").Value(), sectInfluxDB.Key("password").Value())
 	if err != nil {
 		log.Fatalln(err)
 	}
